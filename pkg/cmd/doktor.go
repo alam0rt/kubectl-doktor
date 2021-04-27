@@ -209,7 +209,7 @@ func (o *Doktor) Complete(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	o.restConfig.Timeout = 30 * time.Second
+	o.restConfig.Timeout = 60 * time.Second // 30 seconds for whatever reason isn't enough
 
 	o.clientset, err = kubernetes.NewForConfig(o.restConfig)
 	if err != nil {

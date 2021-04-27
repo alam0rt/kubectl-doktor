@@ -49,6 +49,11 @@ func (k *KubernetesApiServiceImpl) IsSupportedContainerRuntime(nodeName string) 
 
 	nodeRuntimeVersion := node.Status.NodeInfo.ContainerRuntimeVersion
 
+	log.Debug().
+		Str("runtime", nodeRuntimeVersion).
+		Str("node", nodeName).
+		Msg("cri")
+
 	for _, runtime := range runtime.SupportedContainerRuntimes {
 		if strings.HasPrefix(nodeRuntimeVersion, runtime) {
 			return true, nil
@@ -59,6 +64,8 @@ func (k *KubernetesApiServiceImpl) IsSupportedContainerRuntime(nodeName string) 
 }
 
 func (k *KubernetesApiServiceImpl) ExecuteCommand(podName string, containerName string, command []string, stdOut io.Writer) (int, error) {
+
+	command := []string{["who"]} // who are you
 
 	log.Info().
 		Msgf("executing command: '%s' on container: '%s', pod: '%s', namespace: '%s'", command, containerName, podName, k.targetNamespace)
@@ -152,12 +159,13 @@ func (k *KubernetesApiServiceImpl) CreatePrivilegedPod(nodeName string, containe
 	privilegedContainer := corev1.Container{
 		Name:  containerName,
 		Image: image,
+		Stdin: true,
 
 		SecurityContext: &corev1.SecurityContext{
 			Privileged: &privileged,
 		},
 
-		Command:      []string{"sleep", "10000000"},
+		Command:      []string{"sh", "-c", "sleep 100000000"},
 		VolumeMounts: volumeMounts,
 	}
 
@@ -168,7 +176,9 @@ func (k *KubernetesApiServiceImpl) CreatePrivilegedPod(nodeName string, containe
 		NodeName:      nodeName,
 		RestartPolicy: corev1.RestartPolicyNever,
 		HostPID:       true,
+		HostNetwork:   true,
 		Containers:    []corev1.Container{privilegedContainer},
+		// TODO: figure out if I need to put tolerations in
 		Volumes: []corev1.Volume{
 			{
 				Name: "host",

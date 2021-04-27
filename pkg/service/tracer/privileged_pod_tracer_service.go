@@ -21,7 +21,7 @@ type PrivilegedPodTracerService struct {
 }
 
 func NewPrivilegedPodRemoteTracingService(options *config.DoktorSettings, service kube.KubernetesApiService, bridge runtime.ContainerRuntimeBridge) TracerService {
-	return &PrivilegedPodTracerService{settings: options, privilegedContainerName: "ksniff-privileged", kubernetesApiService: service, runtimeBridge: bridge}
+	return &PrivilegedPodTracerService{settings: options, privilegedContainerName: "doktor-privileged", kubernetesApiService: service, runtimeBridge: bridge}
 }
 
 func (p *PrivilegedPodTracerService) Setup() error {
@@ -107,13 +107,7 @@ func (p *PrivilegedPodTracerService) Start(stdOut io.Writer) error {
 	log.Info().
 		Msgf("starting remote tracing using privileged pod")
 
-	command := p.runtimeBridge.BuildTcpdumpCommand(
-		&p.settings.DetectedContainerId,
-		p.settings.UserSpecifiedInterface,
-		p.settings.UserSpecifiedFilter,
-		p.targetProcessId,
-		p.settings.SocketPath,
-	)
+	command := p.runtimeBridge.BuildTestCommand()
 
 	exitCode, err := p.kubernetesApiService.ExecuteCommand(p.privilegedPod.Name, p.privilegedContainerName, command, stdOut)
 	if err != nil {
