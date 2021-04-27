@@ -176,6 +176,7 @@ func (o *Doktor) Complete(cmd *cobra.Command, args []string) error {
 	var err error
 
 	if o.settings.UserSpecifiedVerboseMode {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 		log.Info().
 			Msg("running in verbose mode")
 	}

@@ -6,8 +6,7 @@ import (
 	"io/ioutil"
 	"path"
 
-	"github.com/ucloud/ucloud-sdk-go/ucloud/log"
-	"go.uber.org/zap"
+	"github.com/rs/zerolog/log"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -22,7 +21,6 @@ type KubeRequest struct {
 	Namespace  string
 	Pod        string
 	Container  string
-	logger     *zap.Logger
 }
 
 type ExecCommandRequest struct {
@@ -62,14 +60,16 @@ func PodUploadFile(req UploadFileRequest) (int, error) {
 	stdOut := new(Writer)
 	stdErr := new(Writer)
 
-	req.logger.Sugar().Debugf("uploading file from: '%s' to '%s'", req.Src, req.Dst)
+	log.Debug().
+		Msgf("uploading file from: '%s' to '%s'", req.Src, req.Dst)
 
 	fileContent, err := ioutil.ReadFile(req.Src)
 	if err != nil {
 		return 0, err
 	}
 
-	req.logger.Sugar().Debugf("read '%s' to memory, file size: '%d'", req.Src, len(fileContent))
+	log.Debug().
+		Msgf("read '%s' to memory, file size: '%d'", req.Src, len(fileContent))
 
 	destFileName := path.Base(req.Dst)
 	tarFile, err := WrapAsTar(destFileName, fileContent)
@@ -77,7 +77,8 @@ func PodUploadFile(req UploadFileRequest) (int, error) {
 		return 0, err
 	}
 
-	log.Debugf("formatted '%s' as tar, tar size: '%d'", req.Src, len(tarFile))
+	log.Debug().
+		Msgf("formatted '%s' as tar, tar size: '%d'", req.Src, len(tarFile))
 
 	stdIn := bytes.NewReader(tarFile)
 
@@ -88,7 +89,8 @@ func PodUploadFile(req UploadFileRequest) (int, error) {
 		tarCmd = append(tarCmd, "-C", destDir)
 	}
 
-	log.Debugf("executing tar: '%v'", tarCmd)
+	log.Debug().
+		Msgf("executing tar: '%v'", tarCmd)
 
 	execTarRequest := ExecCommandRequest{
 		KubeRequest: KubeRequest{
@@ -106,8 +108,9 @@ func PodUploadFile(req UploadFileRequest) (int, error) {
 
 	exitCode, err := PodExecuteCommand(execTarRequest)
 
-	log.Debugf("done uploading file, exitCode: '%d', stdOut: '%s', stdErr: '%s'",
-		exitCode, stdOut.Output, stdErr.Output)
+	log.Debug().
+		Msgf("done uploading file, exitCode: '%d', stdOut: '%s', stdErr: '%s'",
+			exitCode, stdOut.Output, stdErr.Output)
 
 	return exitCode, err
 }
