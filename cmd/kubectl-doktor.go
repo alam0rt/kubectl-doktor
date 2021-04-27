@@ -3,17 +3,22 @@ package main
 import (
 	"os"
 
+	"github.com/alam0rt/kubectl-doktor/pkg/cmd"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/pflag"
-
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"github.com/alam0rt/kubectl-doctor/pkg/cmd"
 )
 
 func main() {
-	flags := pflag.NewFlagSet("kubectl-ns", pflag.ExitOnError)
+	flags := pflag.NewFlagSet("kubectl-doktor", pflag.ExitOnError)
 	pflag.CommandLine = flags
 
-	root := cmd.NewCmdNamespace(genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr})
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+	root := cmd.NewCmdDoktor(genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr})
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
+	}
 }
