@@ -1,6 +1,6 @@
 BINARY_NAME=kubectl-doktor
  
-all: build
+all: test build
  
 build:
 	go build -o ${BINARY_NAME} cmd/kubectl-doktor.go
@@ -12,3 +12,6 @@ run:
 clean:
 	go clean
 	rm ${BINARY_NAME}
+
+test:
+	go test -v ./...
